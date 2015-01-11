@@ -10,6 +10,19 @@ Emacs24からはELPAというEmacsの拡張elispのバージョン管理ソフ�
 この設定は、Emacsチュートリアルは終わったがどういうふうに拡張したら良いのかわからない人に一応の例を示すためのものです。
 そのまま使うことも出来ます。
 
+# Emacsのインストール
+[GNU Emacs](http://www.gnu.org/software/emacs/#Obtaining)のページからNear GNU Serverのページにアクセスし、最新版のEmacsのソースをダウンロードします(執筆時では24.4)。emacs-24.4.tar.gzをダウンロードしたとして、
+
+- cd ~/Download
+- tar zxvf ./emacs-24.4.tar.gz
+- cd emacs-24.4/
+- ./configure
+- make
+- sudo make install
+
+でインストールできます。上のファイルはUbuntuでの場合を想定してます。ブラウザで普通にクリックしてダウンロードすると、~/Downloadにファイルがダウンロードされますが、他の場所にダウンロードした場合はその場所にcdしてください。
+
+
 # 補足
 コマンドの表記を一応示します。
 CはCtrlキー, MはAltキーを表します。C-sなどのC or M - <key> は同時押しの表記です。C-sの場合、Ctrlを押しながらsを押すことを表します。
@@ -141,13 +154,36 @@ common.elの中で解説しています
 * Shift+矢印で分化した画面を移動できる
 * 領域を選択してない時、C-wは1ワード削除に割り当てられる
 
-# 設定の書き方など
-まず設定ファイルを書く前に、Emacsの上のタブのOptionから
+# カスタマイズ
+## まずやるカスタマイズ
+Emacsの上のタブのOptionから
+
 * Highlight Matching ParenthesesをOnにしたり、
 * Show/HideでTool-barを非表示にしてみたり、
 * Option -> Customize Emacs -> Custom Themes からテーマを変更すると良いと思います。
 
-ELPAはM-x list-package から呼び出すことが出来きます。
+## キーバインドの変更
+Emacsは設定を書くことによって機能の割り当てキーを変更することが出来ます。
+
+> (define-key global-map (kbd "C-x k") 'kill-line)
+
+この1行により、C-x kにkill-line(カーソルの行でカーソルから行末まで削除する機能を割り当てることが出来ます。kill-lineはC-kに標準で割り当ててあるのであまりこの設定の意味はないかもしれません。
+
+詳しくは[キーバインディング - 環境設定のための Emacs Lisp 入門](http://yohshiy.blog.fc2.com/blog-entry-271.html)などを参照してください。
+(研究室にある[Emacs実践入門](http://www.amazon.co.jp/Emacs%E5%AE%9F%E8%B7%B5%E5%85%A5%E9%96%80-%EF%BD%9E%E6%80%9D%E8%80%83%E3%82%92%E7%9B%B4%E6%84%9F%E7%9A%84%E3%81%AB%E3%82%B3%E3%83%BC%E3%83%89%E5%8C%96%E3%81%97%E3%80%81%E9%96%8B%E7%99%BA%E3%82%92%E5%8A%A0%E9%80%9F%E3%81%99%E3%82%8B-WEB-DB-PRESS-plus/dp/4774150029)を読んでも良いと思います)
+
+[るびきち「日刊Emacs」](http://rubikitch.com/2014/09/10/bind-key/)にキー割り当てを楽にする拡張について解説されているので、煩雑に思うならばこれを活用しても良いかもしれません。
+
+## GUI操作による設定の変更
+M-x customizeからGUI操作によって設定を変更することが出来ます。  
+それっぽい名前の設定を検索から絞り込んでも良いし、Programmingなどカテゴリから弄りたいものを探しても良いと思います。  
+具体的にこの機能をいじりたい、というのがわかっていれば M-x customize-group から機能の名前を入力し、変更できる要素一覧を見ることが出来便利です。
+
+![alt text](./customize.jpg)
+
+## ELPA
+Emacsにはパッケージ管理の拡張が標準ではいっており、簡単に拡張プラグインをインストールすることが出来ます。package.elがそれです。
+M-x list-package からパッケージ一覧を見ることが出来ます。
 
 この使い方は、*Packages* 上で、M-x describe-mode すればわかりますが、
 * iでインストールマーク
@@ -155,9 +191,8 @@ ELPAはM-x list-package から呼び出すことが出来きます。
 * xでマークに対する操作を実行
 * バックスペースでマークの解除
 
-
 くらい分かっておけば良いと思います。
 
-# 最後に
+## 最後に
 積極的にキーバインドなどの標準設定は変更してください。ありがたがる必要はありません。
 個人的にはEmacsは全然使いにくくありませんが、標準のEmacsは使いにくいと思ってます。
