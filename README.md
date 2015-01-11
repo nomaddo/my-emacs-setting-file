@@ -39,7 +39,7 @@ CはCtrlキー, MはAltキーを表します。C-sなどのC or M - <key> は同
 (define-key global-map [(keys)] 'function) のように書くことも出来ます。
 例は双方についてファイル中に見つけることが出来ます。
 
-# この設定ファイルで何が変わること・便利な使い方
+# この設定ファイルで変わる事・便利な使い方
 ## 見た目
 * はじめからテーマが黒を基調としたものに変更されている
 気に入らない場合はEmacs上のOption -> Customize Emacs -> Customize Themesから変えられます
