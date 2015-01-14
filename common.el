@@ -5,6 +5,9 @@
    '("melpa" . "http://melpa.milkbox.net/packages/") t)
   (package-initialize))
 
+;;; elisp
+(add-to-list 'load-path "~/.emacs.d/elisp")
+
 ;;; my-original-prefix-key-map
 ;;; 新しいキーマップの定義
 (defvar my-original-map
@@ -26,10 +29,21 @@
   :height 130
   :family "IPAゴシック") ;; font size
 
+;;; guide-key
+(when (require 'guide-key nil t)
+  (setq guide-key/guide-key-sequence
+        '("C-x r" "C-x 4" "C-c"))
+  (setq guide-key/idle-delay 0.1)
+  (defun guide-key-for-tuareg-mode ()
+    (guide-key/add-local-guide-key-sequence "C-c .")
+    (guide-key/add-local-highlight-command-regexp "tuareg-"))
+  (add-hook 'tuareg-mode-hook 'guide-key-for-tuareg-mode)
+  (guide-key-mode 1)  ; Enable guide-key-mode
+)
+
 ;;; ffap find-fileを強化
 ;;; urlやファイルの前でfind-fileすると
 ;;; その名前が存在すれば入力済みになる
-;;; from (technique bible)
 (ffap-bindings)
 
 ;;; iswitch-buffer buffer切り替えを強化
