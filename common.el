@@ -362,8 +362,8 @@
   (setq ac-sources
         (append
          '(ac-source-math-unicode ac-source-math-latex ac-source-latex-commands)
-                ac-sources))
-  )
+         ac-sources))
+  (add-to-list 'LaTeX-verbatim-environments "lstlisting"))
 (add-hook 'latex-mode-hook 'latex-mode-setup)
 (add-hook 'plain-tex-mode-hook 'latex-mode-setup)
 
