@@ -15,6 +15,9 @@
 (defalias 'my-original-prefix my-original-map)
 (define-key global-map (kbd "s-c") 'my-original-prefix)
 
+;;; (yes/no) を (y/n)に
+(fset 'yes-or-no-p 'y-or-n-p)
+
 ;;; opamがインストールされていればopamで入れた拡張をロード
 (when (executable-find "opam")
   (setq opam-share (substring
@@ -30,7 +33,7 @@
   :family "IPAゴシック") ;; font size
 
 ;;; guide-key
-(when (require 'guide-key nil t)
+(when (require 'guide-key)
   (setq guide-key/guide-key-sequence
         '("C-x r" "C-x 4" "C-c"))
   (setq guide-key/idle-delay 0.1)
@@ -70,19 +73,24 @@
 (setq-default indent-tabs-mode nil)
 
 ;;; diredの設定
-;;; 詳しくは、
-;;; http://keens.github.io/blog/2013/10/04/emacs-dired/
 ;;; diredの説明自体は
 ;;; http://d.hatena.ne.jp/kakurasan/20070702/p1 などを参照してください
-(require 'dired)
-(setq dired-dwim-target t)
+(when (require 'dired)
+  ;; recursiveな操作をいちいち聞いて来ない
+  (setq dired-recursive-copies 'always)
+  (setq dired-recursive-deletes 'always)
 
-(add-hook 'dired-load-hook
-  (lambda ()
-    (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)))
-;;; dired の上でもj,kで上下移動する
-(define-key dired-mode-map (kbd "j") `dired-next-line)
-(define-key dired-mode-map (kbd "k") `dired-previous-line)
+  ;; copyを便利にする
+  ;; 詳しくは http://keens.github.io/blog/2013/10/04/emacs-dired/
+  (setq dired-dwim-target t)
+
+  (add-hook 'dired-load-hook
+    (lambda ()
+      (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)
+
+      ;; dired の上でもj,kで上下移動する
+      (define-key dired-mode-map (kbd "j") `dired-next-line)
+      (define-key dired-mode-map (kbd "k") `dired-previous-line))))
 
 ;;; C-wはkill-regionでリージョンをカットするコマンドだが、
 ;;; リージョンが選択されていない時には後ろの1ワードを削除するコマンドになる
@@ -156,7 +164,7 @@
 ;;; ファイルに印をつけて、印の間を移動するためのモード
 ;;; 印の行はハイライトされるので見やすい
 ;;; 今の設定だと、M-mで印をつけ、M-,で前の印に移動、M-.で次の印に移動する
-(when (require 'bm nil t)
+(when (require 'bm)
   (setq-default bm-buffer-persistence nil)
   (setq bm-restore-repository-on-load t)
   (add-hook 'find-file-hook 'bm-buffer-restore)
@@ -197,10 +205,10 @@
 (define-key view-mode-map (kbd "n") 'cua-scroll-up)
 (define-key view-mode-map (kbd "p") 'cua-scroll-down)
 
-(when (require 'viewer nil t)
-      (setq viewer-modeline-color-unwritable "tomato")
-      (setq viewer-modeline-color-view "orange")
-      (viewer-change-modeline-color-setup))
+(when (require 'viewer)
+  (setq viewer-modeline-color-unwritable "tomato")
+  (setq viewer-modeline-color-view "orange")
+  (viewer-change-modeline-color-setup))
 
 
 ;; F11 フルスクリーン
@@ -232,7 +240,7 @@
 ;;; pont-undoの設定
 ;;; カーソルの位置のリデュ・アンドゥをするための拡張
 ;;; 非常に便利！
-(when (require `point-undo nil t)
+(when (require `point-undo)
   (define-key dired-mode-map (kbd "[") 'point-undo)
   (define-key dired-mode-map (kbd "]") 'point-redo)
   (define-key view-mode-map (kbd "[") 'point-undo)
@@ -247,7 +255,7 @@
 (add-hook 'org-mode-hook 'turn-on-iimage-mode)
 
 ;;; auto-complete.el
-(when (require 'auto-complete-config nil t)
+(when (require 'auto-complete-config)
   (add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
   (ac-config-default)
   (setq ac-candidate-limit 15)
@@ -259,10 +267,10 @@
 
 ;;; c-eldoc
 (when (require 'c-eldoc nil t)
-      (add-hook 'c-mode-hook
-         (lambda ()
-            (set (make-local-variable 'eldoc-idle-delay) 0.20)
-     (c-turn-on-eldoc-mode))))
+  (add-hook 'c-mode-hook
+    (lambda ()
+      (set (make-local-variable 'eldoc-idle-delay) 0.20)
+      (c-turn-on-eldoc-mode))))
 
 ;;; 括弧の範囲色
 ;;; #500 は暗い赤、背景が黒いと映える
@@ -348,9 +356,9 @@
 
 ;;; expand-region
 ;;; http://d.hatena.ne.jp/syohex/20120117/1326814127
-(require 'expand-region)
-(global-set-key (kbd "C-@") 'er/expand-region)
-(global-set-key (kbd "C-M-@") 'er/contract-region)
+(when (require 'expand-region)
+  (global-set-key (kbd "C-@") 'er/expand-region)
+  (global-set-key (kbd "C-M-@") 'er/contract-region))
 
 ;;; add source for auto-complete
 ;;; this adds source for math symbol of latex
@@ -369,25 +377,10 @@
 
 (setq TeX-default-mode 'japanese-latex-mode)
 
-(setq japanese-LaTeX-default-style "jarticle")
-(setq TeX-output-view-style '(("^dvi$" "." "xdvi '%d'")))
-(setq preview-image-type 'dvipng)
-(add-hook 'LaTeX-mode-hook (function (lambda ()
-  (add-to-list 'TeX-command-list
-    '("direct" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t && dvipdfmx -V 4 '%s'"
-        TeX-run-command t nil))
-  (add-to-list 'TeX-command-list
-    '("pTeX" "%(PDF)ptex %`%S%(PDFout)%(mode)%' %t"
-     TeX-run-TeX nil (plain-tex-mode) :help "Run ASCII pTeX"))
-  (add-to-list 'TeX-command-list
-    '("pLaTeX" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t"
-     TeX-run-TeX nil (latex-mode) :help "Run ASCII pLaTeX"))
-  (add-to-list 'TeX-command-list
-    '("evince" "evince '%s.pdf' " TeX-run-command t nil))
-  (add-to-list 'TeX-command-list
-    '("pdf" "dvipdfmx -V 4 '%s' " TeX-run-command t nil))
-
-)))
+;;; latexmkを使ってコンパイル
+;;; http://konn-san.com/prog/why-not-latexmk.html
+(when (require 'auctex-latexmk nil t)
+  (auctex-latexmk-setup))
 
 (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
 (setq reftex-plug-into-AUCTeX t)
@@ -555,6 +548,23 @@
 )
 
 (setq css-indent-offset 2)
+
+;;; howm
+;;; emacs内ローカルwikiツール
+;;; メモ書きに便利
+;;; (手動で入れてください)
+(when (file-exists-p "~/.emacs.d/elisp/howm")
+  ;; elisp/howmが存在すれば設定を行う
+  (add-to-list 'load-path "~/.emacs.d/elisp/howm")
+  (require 'howm)
+  (add-to-list 'guide-key/guide-key-sequence "C-c,")
+  (defun howm-my-initial-setup ()
+    ;; org-modeを同時に使う！
+    (org-mode)
+    (howm-mode))
+  (add-hook 'howm-create-file-hook 'howm-my-initial-setup)
+  (add-hook 'howm-view-open-hook 'howm-my-initial-setup))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
