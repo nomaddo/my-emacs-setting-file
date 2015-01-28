@@ -532,6 +532,19 @@
     org-beamer-sectioning
 ))
 
+;;;
+;;; markdown-mode
+;;; 標準的な markdown では物足りないので，GitHub Flavored Markdown (GFM)
+;;; という Github の独自拡張を使う．redcarpet は GFM スタイルのマークダウンを
+;;; HTML に変換するツールで，ruby を使って色々拡張することもできる．
+;;;
+
+(when (require 'markdown-mode nil t)
+  (setq auto-mode-alist (cons '("\\.markdown" . gfm-mode) auto-mode-alist))
+  (setq auto-mode-alist (cons '("\\.md" . gfm-mode) auto-mode-alist))
+  (setq markdown-command "redcarpet")
+  (add-hook 'gfm-mode-hook 'flyspell-mode))
+
 ;;; image+.el
 ;;; emacs上で表示する画像の大きさなどを調整するための拡張
 (require 'image+)
