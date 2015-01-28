@@ -29,8 +29,11 @@
 
 ;;; fontの設定
 (set-face-attribute 'default nil
-  :height 130
-  :family "IPAゴシック") ;; font size
+  :height 110
+  :family "DejaVu Sans Mono") ;; font size
+;;; 日本語fontの設定
+(set-fontset-font nil 'japanese-jisx0208
+  (font-spec :family "IPAゴシック"))
 
 ;;; guide-key
 (when (require 'guide-key)
