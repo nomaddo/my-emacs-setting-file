@@ -139,7 +139,7 @@
 (setq-default line-spacing 0)
 
 ;;; tool-bar を非表示にする
-(tool-bar-mode nil)
+(tool-bar-mode -1)
 
 ;;; 括弧の範囲内を強調表示
 (show-paren-mode t)
