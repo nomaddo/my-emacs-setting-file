@@ -581,6 +581,16 @@
   (add-hook 'howm-create-file-hook 'howm-my-initial-setup)
   (add-hook 'howm-view-open-hook 'howm-my-initial-setup))
 
+;;;
+;;; 80 文字のハイライト
+;;;
+(defun warn-column80 ()
+  (font-lock-add-keywords
+     nil
+     '(("^[^\n]\\{80\\}\\(.*\\)$" 1 font-lock-warning-face t))))
+
+(add-hook 'cc-mode-hook 'warn-column80)
+(add-hook 'tuareg-mode-hook 'warn-column80)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
