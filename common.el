@@ -14,6 +14,7 @@
 ;;; elisp
 (add-to-list 'load-path "~/.emacs.d/elisp")
 
+;;; elispファイルの中のファイルをすべてload-pathに入れる
 (let* ((files (eshell-extended-glob "~/.emacs.d/elisp/*"))
        (dirs
         (loop for item in files
