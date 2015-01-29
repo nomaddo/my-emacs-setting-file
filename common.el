@@ -29,8 +29,11 @@
 
 ;;; fontの設定
 (set-face-attribute 'default nil
-  :height 130
-  :family "IPAゴシック") ;; font size
+  :height 110
+  :family "DejaVu Sans Mono") ;; font size
+;;; 日本語fontの設定
+(set-fontset-font nil 'japanese-jisx0208
+  (font-spec :family "IPAゴシック"))
 
 ;;; guide-key
 (when (require 'guide-key)
@@ -136,7 +139,7 @@
 (setq-default line-spacing 0)
 
 ;;; tool-bar を非表示にする
-(tool-bar-mode nil)
+(tool-bar-mode -1)
 
 ;;; 括弧の範囲内を強調表示
 (show-paren-mode t)
@@ -529,6 +532,19 @@
     org-beamer-sectioning
 ))
 
+;;;
+;;; markdown-mode
+;;; 標準的な markdown では物足りないので，GitHub Flavored Markdown (GFM)
+;;; という Github の独自拡張を使う．redcarpet は GFM スタイルのマークダウンを
+;;; HTML に変換するツールで，ruby を使って色々拡張することもできる．
+;;;
+
+(when (require 'markdown-mode nil t)
+  (setq auto-mode-alist (cons '("\\.markdown" . gfm-mode) auto-mode-alist))
+  (setq auto-mode-alist (cons '("\\.md" . gfm-mode) auto-mode-alist))
+  (setq markdown-command "redcarpet")
+  (add-hook 'gfm-mode-hook 'flyspell-mode))
+
 ;;; image+.el
 ;;; emacs上で表示する画像の大きさなどを調整するための拡張
 (require 'image+)
@@ -565,6 +581,16 @@
   (add-hook 'howm-create-file-hook 'howm-my-initial-setup)
   (add-hook 'howm-view-open-hook 'howm-my-initial-setup))
 
+;;;
+;;; 80 文字のハイライト
+;;;
+(defun warn-column80 ()
+  (font-lock-add-keywords
+     nil
+     '(("^[^\n]\\{80\\}\\(.*\\)$" 1 font-lock-warning-face t))))
+
+(add-hook 'cc-mode-hook 'warn-column80)
+(add-hook 'tuareg-mode-hook 'warn-column80)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
