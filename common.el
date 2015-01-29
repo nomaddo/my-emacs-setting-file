@@ -5,8 +5,21 @@
    '("melpa" . "http://melpa.milkbox.net/packages/") t)
   (package-initialize))
 
+(require 'em-glob)
+(require 'cl)
+
+;;; startup画面を消す
+(setq inhibit-startup-screen t)
+
 ;;; elisp
 (add-to-list 'load-path "~/.emacs.d/elisp")
+
+(let* ((files (eshell-extended-glob "~/.emacs.d/elisp/*"))
+       (dirs
+        (loop for item in files
+              if (file-directory-p item)
+              collect item)))
+  (mapcar '(lambda (item) (add-to-list 'load-path item)) dirs))
 
 ;;; my-original-prefix-key-map
 ;;; 新しいキーマップの定義
@@ -33,9 +46,10 @@
   :family "IPAゴシック") ;; font size
 
 ;;; guide-key
+;;; http://www.kaichan.info/blog/2012-12-03-emacs-advent-calendar-2012-03.html
 (when (require 'guide-key)
   (setq guide-key/guide-key-sequence
-        '("C-x r" "C-x 4" "C-c"))
+        '("C-x r" "C-x 4" "C-c" "M-s" "M-s h"))
   (setq guide-key/idle-delay 0.1)
   (defun guide-key-for-tuareg-mode ()
     (guide-key/add-local-guide-key-sequence "C-c .")
@@ -85,12 +99,13 @@
   (setq dired-dwim-target t)
 
   (add-hook 'dired-load-hook
-    (lambda ()
-      (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)
+            (lambda ()
+              (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)
 
-      ;; dired の上でもj,kで上下移動する
-      (define-key dired-mode-map (kbd "j") `dired-next-line)
-      (define-key dired-mode-map (kbd "k") `dired-previous-line))))
+              (define-key dired-mode-map (kbd "C-c C-c") `compile)
+              ;; dired の上でもj,kで上下移動する
+              (define-key dired-mode-map (kbd "j") `dired-next-line)
+              (define-key dired-mode-map (kbd "k") `dired-previous-line))))
 
 ;;; C-wはkill-regionでリージョンをカットするコマンドだが、
 ;;; リージョンが選択されていない時には後ろの1ワードを削除するコマンドになる
@@ -136,7 +151,7 @@
 (setq-default line-spacing 0)
 
 ;;; tool-bar を非表示にする
-(tool-bar-mode nil)
+(tool-bar-mode -1)
 
 ;;; 括弧の範囲内を強調表示
 (show-paren-mode t)
@@ -250,7 +265,7 @@
 
 
 ;;; org-mode config
-; 画像のインライン表示をデフォルトにする
+                                        ; 画像のインライン表示をデフォルトにする
 (setq org-startup-with-inline-images t)
 (add-hook 'org-mode-hook 'turn-on-iimage-mode)
 
@@ -268,9 +283,9 @@
 ;;; c-eldoc
 (when (require 'c-eldoc nil t)
   (add-hook 'c-mode-hook
-    (lambda ()
-      (set (make-local-variable 'eldoc-idle-delay) 0.20)
-      (c-turn-on-eldoc-mode))))
+            (lambda ()
+              (set (make-local-variable 'eldoc-idle-delay) 0.20)
+              (c-turn-on-eldoc-mode))))
 
 ;;; 括弧の範囲色
 ;;; #500 は暗い赤、背景が黒いと映える
@@ -316,7 +331,7 @@
 ;;; 手動で入れてください。merlinがあれば何とかなりますが。
 (require 'caml)
 (when (require 'ocamlspot nil t)
-; tuareg mode hook (use caml-mode-hook instead if you use caml-mode)
+                                        ; tuareg mode hook (use caml-mode-hook instead if you use caml-mode)
   (add-hook
    'tuareg-mode-hook
    '(lambda ()
@@ -337,10 +352,10 @@
       )
    )
 
- ; set the path of the ocamlspot binary.
- ; If you did make opt, ocamlspot.opt is recommended.
- ; (setq ocamlspot-command "~/Dropbox/prog/ocamlspot.opt")
-)
+                                        ; set the path of the ocamlspot binary.
+                                        ; If you did make opt, ocamlspot.opt is recommended.
+                                        ; (setq ocamlspot-command "~/Dropbox/prog/ocamlspot.opt")
+  )
 
 ;;; ocamldebug
 ;;; 標準よりもキーバインドを使いやすくします(でないと死ぬ)
@@ -393,12 +408,31 @@
 (add-hook 'LaTeX-mode-hook 'flyspell-mode)
 (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 
+(setq japanese-LaTeX-default-style "jarticle")
+(setq TeX-output-view-style '(("^dvi$" "." "xdvi '%d'")))
+(setq preview-image-type 'dvipng)
+(add-hook 'LaTeX-mode-hook (function (lambda ()
+  (add-to-list 'TeX-command-list
+               '("direct" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t && dvipdfmx -V 4 '%s'"
+                 TeX-run-command t nil))
+  (add-to-list 'TeX-command-list
+               '("pTeX" "%(PDF)ptex %`%S%(PDFout)%(mode)%' %t"
+                 TeX-run-TeX nil (plain-tex-mode) :help "Run ASCII pTeX"))
+  (add-to-list 'TeX-command-list
+               '("pLaTeX" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t"
+                 TeX-run-TeX nil (latex-mode) :help "Run ASCII pLaTeX"))
+  (add-to-list 'TeX-command-list
+               '("evince" "evince '%s.pdf' " TeX-run-command t nil))
+  (add-to-list 'TeX-command-list
+               '("pdf" "dvipdfmx -V 4 '%s' " TeX-run-command t nil))
+  )))
+
 ;; Change key bindings
 (add-hook 'reftex-mode-hook
- '(lambda ()
-    (define-key reftex-mode-map (kbd "\C-cr") 'reftex-reference)
-    (define-key reftex-mode-map (kbd "\C-cl") 'reftex-label)
-    (define-key reftex-mode-map (kbd "\C-cc") 'reftex-citation)))
+          '(lambda ()
+             (define-key reftex-mode-map (kbd "\C-cr") 'reftex-reference)
+             (define-key reftex-mode-map (kbd "\C-cl") 'reftex-label)
+             (define-key reftex-mode-map (kbd "\C-cc") 'reftex-citation)))
 
 ;; 数式のラベル作成時にも自分でラベルを入力できるようにする
 (setq reftex-insert-label-flags '("s" "sfte"))
@@ -407,7 +441,7 @@
 (setq reftex-label-alist
       '((nil ?e nil "\\eqref{%s}" nil nil)))
 
-; RefTeXで使用するbibファイルの位置を指定する
+                                        ; RefTeXで使用するbibファイルの位置を指定する
 (setq reftex-default-bibliography '("~/tex/biblio.bib" "~/tex/biblio2.bib"))
 
 (define-key ac-completing-map (kbd "<tab>") 'ac-complete)
@@ -437,33 +471,51 @@
     '((candidates . my-ac-look)
       (requires . 2)))  ;; 2文字以上ある場合にのみ対応させる
 
-(global-set-key (kbd "M-h") 'ac-complete-look))
+  (global-set-key (kbd "M-h") 'ac-complete-look))
 
 ;;; popwin
 ;;; Emacs標準と比較して、激しく挙動を変化させるので
 ;;; 肌に合わなければコメントアウトしてください
 ;;; http://valvallow.blogspot.jp/2011/03/emacs-popwinel.html
-(require 'popwin)
-(popwin-mode 1)
-(global-set-key (kbd "s-v") popwin:keymap)
+(when (require 'popwin)
+  (popwin-mode 1)
+  (global-set-key (kbd "s-v") popwin:keymap)
 
-; 最近出したminibufferをpopupさせる
+  (defadvice eww-render (around eww-render-popwin activate)
+    (save-window-excursion ad-do-it)
+    (unless (get-buffer-window "*eww*")
+      (pop-to-buffer "*eww*")))
+
+  (defadvice w3m-browse-url (around w3m-browse-url-popwin activate)
+    (save-window-excursion ad-do-it)
+    (unless (get-buffer-window "*w3m*")
+      (pop-to-buffer "*w3m*")))
+
+  (defadvice find-dired (around find-dired-popwin activate)
+    (save-window-excursion ad-do-it)
+    (unless (get-buffer-window "*Find*")
+      (pop-to-buffer "*Find*")))
+  )
+
+
+
+                                        ; 最近出したminibufferをpopupさせる
 (define-key popwin:keymap (kbd "j") `popwin:popup-last-buffer)
-; 最近出したminibufferを通常通り表示させる
+                                        ; 最近出したminibufferを通常通り表示させる
 (define-key popwin:keymap (kbd "k") `popwin:original-pop-to-last-buffer)
-; set the height of popup-buffer
+                                        ; set the height of popup-buffer
 (setq popwin:popup-window-height 0.5)
-; add popup buffers
+                                        ; add popup buffers
 (setq popwin:special-display-config
       (append `(("*grep*"))
               popwin:special-display-config))
-; *grep*に素早く切り換える
+                                        ; *grep*に素早く切り換える
 (defun my-switch-grep-buffer()
   "grepバッファに切り替える"
   (interactive)
   (if (get-buffer "*grep*")
       (pop-to-buffer "*grep*")
-(message "No grep buffer")))
+    (message "No grep buffer")))
 (define-key popwin:keymap (kbd "g") `my-switch-grep-buffer)
 
 ;; to avoid bug
@@ -478,8 +530,8 @@
 (global-set-key (kbd "C-x T") 'google-translate-query-translate)
 ;; 翻訳のデフォルト値を設定（en -> ja）
 (custom-set-variables
-  '(google-translate-default-source-language "en")
-  '(google-translate-default-target-language "ja"))
+ '(google-translate-default-source-language "en")
+ '(google-translate-default-target-language "ja"))
 
 ;;; ace-jump-mode
 ;;; http://d.hatena.ne.jp/syohex/20120304/1330822993
@@ -515,19 +567,19 @@
 (setq org-export-latex-date-format "%Y-%m-%d")
 (setq org-export-latex-classes nil)
 (add-to-list 'org-export-latex-classes
-  '("jarticle"
-    "\\documentclass[a4j]{jarticle}"
-    ("\\section{%s}" . "\\section*{%s}")
-    ("\\subsection{%s}" . "\\subsection*{%s}")
-    ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-    ("\\paragraph{%s}" . "\\paragraph*{%s}")
-    ("\\subparagraph{%s}" . "\\subparagraph*{%s}")
-))
+             '("jarticle"
+               "\\documentclass[a4j]{jarticle}"
+               ("\\section{%s}" . "\\section*{%s}")
+               ("\\subsection{%s}" . "\\subsection*{%s}")
+               ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+               ("\\paragraph{%s}" . "\\paragraph*{%s}")
+               ("\\subparagraph{%s}" . "\\subparagraph*{%s}")
+               ))
 (add-to-list 'org-export-latex-classes
-  '("beamer"
-    "\\documentclass[compress,dvipdfm]{beamer}"
-    org-beamer-sectioning
-))
+             '("beamer"
+               "\\documentclass[compress,dvipdfm]{beamer}"
+               org-beamer-sectioning
+               ))
 
 ;;; image+.el
 ;;; emacs上で表示する画像の大きさなどを調整するための拡張
@@ -539,25 +591,27 @@
 ;;; anzu
 ;;; http://qiita.com/syohex/items/56cf3b7f7d9943f7a7ba
 (when (require 'anzu) nil t
-  (global-anzu-mode +1)
-  (setq anzu-mode-lighter "")
-  (setq anzu-deactivate-region t)
-  (setq anzu-search-threshold 100)
-  (global-set-key (kbd "M-s a") 'anzu-query-replace-at-cursor)
-  (global-set-key (kbd "M-s q") 'anzu-query-replace)
-)
+      (global-anzu-mode +1)
+      (setq anzu-mode-lighter "")
+      (setq anzu-deactivate-region t)
+      (setq anzu-search-threshold 100)
+      (global-set-key (kbd "M-s a") 'anzu-query-replace-at-cursor)
+      (global-set-key (kbd "M-s q") 'anzu-query-replace)
+      (global-set-key (kbd "M-s r") 'anzu-replace-at-cursor-thing)
+      )
 
 (setq css-indent-offset 2)
+
+;;; search-web.el
+(when (require 'search-web nil t)
+  (global-set-key (kbd "M-s s") 'search-web-dwim))
 
 ;;; howm
 ;;; emacs内ローカルwikiツール
 ;;; メモ書きに便利
 ;;; (手動で入れてください)
-(when (file-exists-p "~/.emacs.d/elisp/howm")
-  ;; elisp/howmが存在すれば設定を行う
-  (add-to-list 'load-path "~/.emacs.d/elisp/howm")
-  (require 'howm)
-  (add-to-list 'guide-key/guide-key-sequence "C-c,")
+(when (require 'howm nil t)
+  (add-to-list 'guide-key/guide-key-sequence "C-c ,")
   (defun howm-my-initial-setup ()
     ;; org-modeを同時に使う！
     (org-mode)
@@ -595,7 +649,7 @@
 (define-key global-map (kbd "s-g") `keyboard-quit)
 ;;; 警告なしでrevert-bufferする
 (define-key my-original-map (kbd "s-b")
-    '(lambda () (interactive) (revert-buffer nil t t)))
+  '(lambda () (interactive) (revert-buffer nil t t)))
 
 
 ;;; auto-complete-mode start
@@ -631,6 +685,9 @@
 ;; font-size
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C-=") 'text-scale-decrease)
+
+;; customize-group
+(global-set-key [f5] 'customize-group)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; start phase
