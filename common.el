@@ -25,9 +25,9 @@
 ;;; my-original-prefix-key-map
 ;;; 新しいキーマップの定義
 (defvar my-original-map
-  (make-sparse-keymap) "My original keymap binded to s-c.")
+  (make-sparse-keymap) "My original keymap binded to M-o.")
 (defalias 'my-original-prefix my-original-map)
-(define-key global-map (kbd "s-c") 'my-original-prefix)
+(define-key global-map (kbd "M-o") 'my-original-prefix)
 
 ;;; (yes/no) を (y/n)に
 (fset 'yes-or-no-p 'y-or-n-p)
@@ -43,8 +43,8 @@
 
 ;;; fontの設定
 (set-face-attribute 'default nil
-  :height 110
-  :family "DejaVu Sans Mono") ;; font size
+  :height 120 ;; font size
+  :family "Ricty Diminished")
 ;;; 日本語fontの設定
 (set-fontset-font nil 'japanese-jisx0208
   (font-spec :family "IPAゴシック"))
@@ -53,7 +53,7 @@
 ;;; http://www.kaichan.info/blog/2012-12-03-emacs-advent-calendar-2012-03.html
 (when (require 'guide-key)
   (setq guide-key/guide-key-sequence
-        '("C-x r" "C-x 4" "C-c" "M-s" "M-s h"))
+        '("C-x r" "C-x 4" "C-c" "M-s" "M-s h" "C-z" "M-o" "M-o g"))
   (setq guide-key/idle-delay 0.1)
   (defun guide-key-for-tuareg-mode ()
     (guide-key/add-local-guide-key-sequence "C-c .")
@@ -66,6 +66,10 @@
 ;;; urlやファイルの前でfind-fileすると
 ;;; その名前が存在すれば入力済みになる
 (ffap-bindings)
+
+;;; icomplete-mode
+;;; M-xなどで候補を表示する
+(icomplete-mode t)
 
 ;;; iswitch-buffer buffer切り替えを強化
 ;;; C-r, C-sで候補選択ができる
@@ -503,17 +507,17 @@
 
 
 
-                                        ; 最近出したminibufferをpopupさせる
+;; 最近出したminibufferをpopupさせる
 (define-key popwin:keymap (kbd "j") `popwin:popup-last-buffer)
-                                        ; 最近出したminibufferを通常通り表示させる
+;; 最近出したminibufferを通常通り表示させる
 (define-key popwin:keymap (kbd "k") `popwin:original-pop-to-last-buffer)
-                                        ; set the height of popup-buffer
+;; set the height of popup-buffer
 (setq popwin:popup-window-height 0.5)
-                                        ; add popup buffers
+;; add popup buffers
 (setq popwin:special-display-config
       (append `(("*grep*"))
               popwin:special-display-config))
-                                        ; *grep*に素早く切り換える
+;; *grep*に素早く切り換える
 (defun my-switch-grep-buffer()
   "grepバッファに切り替える"
   (interactive)
@@ -560,12 +564,27 @@
 (require 'shell)
 (define-key shell-mode-map (kbd "C-c SPC") 'ace-jump-mode)
 
-;;; git-guitter
+;;; git-gutter
 ;;; http://qiita.com/syohex/items/a669b35fbbfcdda0cbf2
 (when (require 'git-gutter)
   (global-git-gutter-mode t)
   (global-set-key (kbd "M-n") 'git-gutter:next-hunk)
-  (global-set-key (kbd "M-p") 'git-gutter:previous-hunk))
+  (global-set-key (kbd "M-p") 'git-gutter:previous-hunk)
+
+  ;; originalのprefixコマンドを作る
+  (defvar my-git-map (make-sparse-keymap))
+  (defalias 'my-git-prefix my-git-map)
+
+  (define-key global-map (kbd "M-o g") my-git-map)
+
+  (define-key my-git-map (kbd "s") 'git-gutter:set-start-revision)
+  (define-key my-git-map (kbd "p") 'git-gutter:popup-diff)
+  (define-key my-git-map (kbd "r") 'git-gutter:revert-hunk)
+)
+
+(when (require 'magit)
+  (define-key my-original-map (kbd "M-o") 'magit-key-mode-popup-dispatch)
+)
 
 ;;; org-mode
 (setq org-export-latex-date-format "%Y-%m-%d")
@@ -666,23 +685,15 @@
 (when (require 'popwin)
   (define-key global-map [(C z)] popwin:keymap))
 
-;;; compile
-(define-key my-original-map (kbd "s-c") `compile)
-
 (define-key compilation-mode-map (kbd "j") 'compilation-next-error)
 (define-key compilation-mode-map (kbd "k") 'compilation-previous-error)
 
-(define-key my-original-map (kbd "o") `org-mode)
 (define-key global-map (kbd "s-g") `keyboard-quit)
-;;; 警告なしでrevert-bufferする
-(define-key my-original-map (kbd "s-b")
-  '(lambda () (interactive) (revert-buffer nil t t)))
-
 
 ;;; auto-complete-mode start
 (define-key my-original-map (kbd "a") `auto-complete-mode)
 
-;;; delete-other-windows-vertically
+(define-key my-original-map (kbd "d") `delete-other-windows-vertically)
 (define-key my-original-map (kbd "d") `delete-other-windows-vertically)
 
 ;;; back-space
