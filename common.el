@@ -206,7 +206,7 @@
     (bm-repository-load)
     (bm-find-files-in-repository))
 
-  (setq bm-repository-file "~/.emacs.d/bm-repository")
+  ;; (setq bm-repository-file "~/.emacs.d/bm-repository")
   (setq-default bm-buffer-persistence t)
   (setq bm-restore-repository-on-load t)
   (add-hook 'after-init-hook 'bm-repository-load-and-open)
