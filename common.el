@@ -187,23 +187,48 @@
 ;;; ファイルに印をつけて、印の間を移動するためのモード
 ;;; 印の行はハイライトされるので見やすい
 ;;; 今の設定だと、M-mで印をつけ、M-,で前の印に移動、M-.で次の印に移動する
+;;; Emacsを終了しても印は残る！
+
+;;; 永続化 http://rubikitch.com/?s=bm&x=0&y=0
 (when (require 'bm)
-  (setq-default bm-buffer-persistence nil)
+  (defun bm-find-files-in-repository ()
+    (interactive)
+    (cl-loop for (key . _) in bm-repository
+             when (file-exists-p key)
+             do (find-file-noselect key)))
+
+  (defun bm-repository-load-and-open ()
+    (interactive)
+    (bm-repository-load)
+    (bm-find-files-in-repository))
+
+  (setq bm-repository-file "~/.emacs.d/bm-repository")
+  (setq-default bm-buffer-persistence t)
   (setq bm-restore-repository-on-load t)
-  (add-hook 'find-file-hook 'bm-buffer-restore)
+  (add-hook 'after-init-hook 'bm-repository-load-and-open)
+
+  (defun bm-buffer-restore-safe ()
+    (ignore-errors (bm-buffer-restore)))
+
+  (add-hook 'find-file-hooks 'bm-buffer-restore-safe)
   (add-hook 'kill-buffer-hook 'bm-buffer-save)
-  (add-hook 'after-save-hook 'bm-buffer-save)
+
+  (defun bm-save-to-repository ()
+    (interactive)
+    (unless noninteractive
+      (bm-buffer-save-all)
+      (bm-repository-save)))
+
+  (add-hook 'kill-emacs-hook 'bm-save-to-repository)
+  (run-with-idle-timer 600 t 'bm-save-to-repository)
   (add-hook 'after-revert-hook 'bm-buffer-restore)
   (add-hook 'vc-before-checkin-hook 'bm-buffer-save)
-  (add-hook 'kill-emacs-hook '(lambda nil
-                                (bm-buffer-save-all)
-                                (bm-repository-save)))
+  (add-hook 'before-save-hook 'bm-buffer-save)
+
   (define-key global-map (kbd "M-m") 'bm-toggle)
   (define-key global-map (kbd "M-,") 'bm-previous)
   (define-key global-map (kbd "M-.") 'bm-next)
-  (custom-set-faces
-   '(bm-face ((t (:background "chartreuse" :foreground "black"))))
-   '(bm-fringe-face ((t (:background "DarkOrange1" :foreground "tan"))))))
+  )
 
 ;;; view-mode
 ;;; 閲覧専用モード
