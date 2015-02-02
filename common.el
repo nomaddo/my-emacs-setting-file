@@ -71,6 +71,10 @@
 ;;; M-xなどで候補を表示する
 (icomplete-mode t)
 
+;;; autopair
+(when (require 'autopair)
+  (autopair-global-mode))
+
 ;;; iswitch-buffer buffer切り替えを強化
 ;;; C-r, C-sで候補選択ができる
 ;;; obsoleteなのでいつか標準じゃなくなると思う…
@@ -228,6 +232,8 @@
   (define-key global-map (kbd "M-m") 'bm-toggle)
   (define-key global-map (kbd "M-,") 'bm-previous)
   (define-key global-map (kbd "M-.") 'bm-next)
+
+  (define-key my-original-map (kbd "s") 'bm-show-all)
   )
 
 ;;; view-mode
