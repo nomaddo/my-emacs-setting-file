@@ -69,7 +69,7 @@
 
 ;;; icomplete-mode
 ;;; M-xなどで候補を表示する
-(icomplete-mode t)
+;; (icomplete-mode t)
 
 ;;; autopair
 (when (require 'autopair)
