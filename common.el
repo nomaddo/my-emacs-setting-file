@@ -110,14 +110,18 @@
   ;; 詳しくは http://keens.github.io/blog/2013/10/04/emacs-dired/
   (setq dired-dwim-target t)
 
-  (add-hook 'dired-load-hook
-            (lambda ()
-              (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)
+  ;; rでファイル名変更モードに成る
+  (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode)
 
-              (define-key dired-mode-map (kbd "C-c C-c") `compile)
-              ;; dired の上でもj,kで上下移動する
-              (define-key dired-mode-map (kbd "j") `dired-next-line)
-              (define-key dired-mode-map (kbd "k") `dired-previous-line))))
+  (define-key dired-mode-map (kbd "C-c C-c") `compile)
+  ;; dired の上でもj,kで上下移動する
+  (define-key dired-mode-map (kbd "j") `dired-next-line)
+  (define-key dired-mode-map (kbd "k") `dired-previous-line)
+
+  ;; dired上で簡単にファイル名などをrenameできるようにする
+  ;; http://www.bookshelf.jp/soft/meadow_25.html#SEC298
+  (require 'wdired)
+  (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode))
 
 ;;; C-wはkill-regionでリージョンをカットするコマンドだが、
 ;;; リージョンが選択されていない時には後ろの1ワードを削除するコマンドになる
@@ -154,7 +158,6 @@
 (require `recentf-ext)
 
 ;;; cua-mode
-;;; cua-modeの説明
 ;;; http://tech.kayac.com/archive/emacs-rectangle.html
 (setq cua-enable-cua-keys nil)
 (cua-mode t)
@@ -224,7 +227,7 @@
       (bm-repository-save)))
 
   (add-hook 'kill-emacs-hook 'bm-save-to-repository)
-  (run-with-idle-timer 600 t 'bm-save-to-repository)
+  (run-with-idle-timer 60 t 'bm-save-to-repository)
   (add-hook 'after-revert-hook 'bm-buffer-restore)
   (add-hook 'vc-before-checkin-hook 'bm-buffer-save)
   (add-hook 'before-save-hook 'bm-buffer-save)
@@ -232,8 +235,7 @@
   (define-key global-map (kbd "M-m") 'bm-toggle)
   (define-key global-map (kbd "M-,") 'bm-previous)
   (define-key global-map (kbd "M-.") 'bm-next)
-
-  (define-key my-original-map (kbd "s") 'bm-show-all)
+  (define-key my-original-map (kbd "l") 'bm-show-all)
   )
 
 ;;; view-mode
@@ -307,6 +309,7 @@
                                         ; 画像のインライン表示をデフォルトにする
 (setq org-startup-with-inline-images t)
 (add-hook 'org-mode-hook 'turn-on-iimage-mode)
+(setq org-confirm-babel-evaluate nil)
 
 ;;; auto-complete.el
 (when (require 'auto-complete-config)
@@ -386,6 +389,12 @@
       (local-set-key "\C-c\C-i" 'ocamlspot-xtype)
       (local-set-key "\C-c\C-y" 'ocamlspot-type-and-copy)
       (local-set-key "\C-cp" 'ocamlspot-pop-jump-stack)
+      (defun utop-eval-region-or-phrase ()
+        (interactive)
+        (if (region-active-p)
+            (utop-eval-region (mark) (point))
+          (utop-eval-phrase)))
+      (define-key tuareg-mode-map "\C-x\C-e" 'utop-eval-region-or-phrase)
       (define-key tuareg-mode-map (kbd "C-M-n") 'forward-list)
       (define-key tuareg-mode-map (kbd "C-M-p") 'backward-list)
       )
@@ -433,8 +442,8 @@
 
 ;;; latexmkを使ってコンパイル
 ;;; http://konn-san.com/prog/why-not-latexmk.html
-(when (require 'auctex-latexmk nil t)
-  (auctex-latexmk-setup))
+;; (when (require 'auctex-latexmk nil t)
+;;  (auctex-latexmk-setup))
 
 (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
 (setq reftex-plug-into-AUCTeX t)
@@ -480,7 +489,7 @@
 (setq reftex-label-alist
       '((nil ?e nil "\\eqref{%s}" nil nil)))
 
-                                        ; RefTeXで使用するbibファイルの位置を指定する
+;; RefTeXで使用するbibファイルの位置を指定する
 (setq reftex-default-bibliography '("~/tex/biblio.bib" "~/tex/biblio2.bib"))
 
 (define-key ac-completing-map (kbd "<tab>") 'ac-complete)
@@ -534,6 +543,11 @@
     (save-window-excursion ad-do-it)
     (unless (get-buffer-window "*Find*")
       (pop-to-buffer "*Find*")))
+
+  (defadvice bm-show-all (around bm-show-all-popwin activate)
+    (save-window-excursion ad-do-it)
+    (unless (get-buffer-window "*bm-bookmarks*")
+      (pop-to-buffer "*bm-bookmarks*")))
   )
 
 
@@ -609,15 +623,18 @@
   (define-key global-map (kbd "M-o g") my-git-map)
 
   (define-key my-git-map (kbd "s") 'git-gutter:set-start-revision)
-  (define-key my-git-map (kbd "p") 'git-gutter:popup-diff)
+  (define-key my-git-map (kbd "p") 'git-gutter:popup-hunk)
   (define-key my-git-map (kbd "r") 'git-gutter:revert-hunk)
 )
 
 (when (require 'magit)
+  (setq magit-last-seen-setup-instructions "1.4.0")
   (define-key my-original-map (kbd "M-o") 'magit-key-mode-popup-dispatch)
+  (setq magit-auto-revert-mode nil)
 )
 
 ;;; org-mode
+(require 'org)
 (setq org-export-latex-date-format "%Y-%m-%d")
 (setq org-export-latex-classes nil)
 (add-to-list 'org-export-latex-classes
@@ -634,6 +651,7 @@
                "\\documentclass[compress,dvipdfm]{beamer}"
                org-beamer-sectioning
                ))
+(define-key org-mode-map (kbd "M-i") 'pcomplete)
 
 ;;;
 ;;; markdown-mode
@@ -661,7 +679,7 @@
       (global-anzu-mode +1)
       (setq anzu-mode-lighter "")
       (setq anzu-deactivate-region t)
-      (setq anzu-search-threshold 100)
+      (setq anzu-search-threshold 1000)
       (global-set-key (kbd "M-s a") 'anzu-query-replace-at-cursor)
       (global-set-key (kbd "M-s q") 'anzu-query-replace)
       (global-set-key (kbd "M-s r") 'anzu-replace-at-cursor-thing)
@@ -697,6 +715,31 @@
 (add-hook 'cc-mode-hook 'warn-column80)
 (add-hook 'tuareg-mode-hook 'warn-column80)
 
+;;; jedi
+;;; pythonでメソッドなどの保管を行うためのプラグイン
+(when (require `jedi)
+  (add-hook 'python-mode-hook 'jedi:setup)
+  (setq jedi:complete-on-dot t)                 ; optional
+)
+;;; javascript
+;;; tern-complete
+;; (add-to-list 'load-path "~/tern")
+;; (eval-after-load 'tern
+;;   '(progn
+;;      (require 'tern-auto-complete)
+;;      (tern-ac-setup)))
+;; (add-hook 'js-mode-hook (lambda () (js2-mode) (tern-mode t)))
+;; (define-key tern-mode-keymap (kbd "M-i") 'tern-ac-complete)
+
+;;; for html
+;;; zencoding
+;;; http://www.456bereastreet.com/archive/200909/write_html_and_css_quicker_with_with_zen_coding/
+(when (require 'zencoding-mode nil t)
+  (add-to-list 'load-path "~/Emacs/zencoding/")
+
+  (add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
 ;; ここにまとめて書くこと
@@ -722,7 +765,7 @@
 (define-key global-map (kbd "s-g") `keyboard-quit)
 
 ;;; auto-complete-mode start
-(define-key my-original-map (kbd "a") `auto-complete-mode)
+(define-key my-original-map (kbd "C-a") `auto-complete-mode)
 
 (define-key my-original-map (kbd "d") `delete-other-windows-vertically)
 (define-key my-original-map (kbd "d") `delete-other-windows-vertically)
@@ -758,6 +801,10 @@
 ;; customize-group
 (global-set-key [f5] 'customize-group)
 
+;; magit-log
+(define-key my-original-map (kbd "s") 'magit-log)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; start phase
 ;; 起動時に実行するコマンドを書く
@@ -767,3 +814,17 @@
 ;;;
 ;; (custom-set-variables
 ;;  '(initial-frame-alist (quote ((fullscreen . maximized)))))
+
+(defvar memo-file-directroy "~/.emacs.d/.memo")
+
+(defun mystart nil
+  (require 'real-auto-save)
+  (add-to-list 'real-auto-save-alist "*memo*")
+  (find-file memo-file-directroy)
+  (rename-buffer "*memo*")
+  (org-mode)
+  (real-auto-save-mode)
+  (switch-to-buffer "*scratch*")
+  )
+
+;; (mystart)
