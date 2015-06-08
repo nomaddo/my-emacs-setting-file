@@ -10,7 +10,7 @@
       '(tuareg magit git-gutter markdown-mode auto-complete
 	       expand-region bm google-translate popup popwin redo+ viewer
 	       ace-jump-mode anzu sml-mode wgrep point-undo
-	       org-present image+ ac-math c-eldoc auctex auctex-latexmk fm
-               recentf-ext guide-key w3m autopair minibuf-isearch search-web))
+	       org-present image+ ac-math c-eldoc auctex auctex-latexmk fm ag
+           recentf-ext guide-key w3m autopair minibuf-isearch search-web))
 
 (mapc 'package-install initial-recommend-packages)

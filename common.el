@@ -139,7 +139,7 @@
 (setq completion-ignore-case t)
 
 ;;; 行末のスペースを保存するときに削除する
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
+;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
 ;;; 全角スペースを黄色でハイライト
 (global-hi-lock-mode 1)
@@ -558,18 +558,6 @@
 (define-key popwin:keymap (kbd "k") `popwin:original-pop-to-last-buffer)
 ;; set the height of popup-buffer
 (setq popwin:popup-window-height 0.5)
-;; add popup buffers
-(setq popwin:special-display-config
-      (append `(("*grep*"))
-              popwin:special-display-config))
-;; *grep*に素早く切り換える
-(defun my-switch-grep-buffer()
-  "grepバッファに切り替える"
-  (interactive)
-  (if (get-buffer "*grep*")
-      (pop-to-buffer "*grep*")
-    (message "No grep buffer")))
-(define-key popwin:keymap (kbd "g") `my-switch-grep-buffer)
 
 ;; to avoid bug
 (setq popwin:close-popup-window-timer-interval 0.05)
@@ -675,15 +663,15 @@
 
 ;;; anzu
 ;;; http://qiita.com/syohex/items/56cf3b7f7d9943f7a7ba
-(when (require 'anzu) nil t
-      (global-anzu-mode +1)
-      (setq anzu-mode-lighter "")
-      (setq anzu-deactivate-region t)
-      (setq anzu-search-threshold 1000)
-      (global-set-key (kbd "M-s a") 'anzu-query-replace-at-cursor)
-      (global-set-key (kbd "M-s q") 'anzu-query-replace)
-      (global-set-key (kbd "M-s r") 'anzu-replace-at-cursor-thing)
-      )
+(when (require 'anzu nil t)
+  (global-anzu-mode +1)
+  (setq anzu-mode-lighter "")
+  (setq anzu-deactivate-region t)
+  (setq anzu-search-threshold 1000)
+  (global-set-key (kbd "M-s a") 'anzu-query-replace-at-cursor)
+  (global-set-key (kbd "M-s q") 'anzu-query-replace)
+  (global-set-key (kbd "M-s r") 'anzu-replace-at-cursor-thing)
+)
 
 (setq css-indent-offset 2)
 
@@ -717,28 +705,36 @@
 
 ;;; jedi
 ;;; pythonでメソッドなどの保管を行うためのプラグイン
-(when (require `jedi)
+(when (require `jedi nil t)
   (add-hook 'python-mode-hook 'jedi:setup)
   (setq jedi:complete-on-dot t)                 ; optional
 )
+
 ;;; javascript
 ;;; tern-complete
 ;; (add-to-list 'load-path "~/tern")
 ;; (eval-after-load 'tern
-;;   '(progn
-;;      (require 'tern-auto-complete)
-;;      (tern-ac-setup)))
-;; (add-hook 'js-mode-hook (lambda () (js2-mode) (tern-mode t)))
+;;    '(progn
+;;        (require 'tern-auto-complete)
+;;        (tern-ac-setup)))
+;;   (add-hook 'js-mode-hook (lambda () (js2-mode) (tern-mode t)))
 ;; (define-key tern-mode-keymap (kbd "M-i") 'tern-ac-complete)
 
 ;;; for html
 ;;; zencoding
 ;;; http://www.456bereastreet.com/archive/200909/write_html_and_css_quicker_with_with_zen_coding/
+
 (when (require 'zencoding-mode nil t)
   (add-to-list 'load-path "~/Emacs/zencoding/")
-
   (add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
 )
+
+;;; makefile-mode
+(add-hook 'makefile-mode-hook
+  '(lambda ()
+     (local-set-key (kbd "C-c C-c") `compile)
+     ))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
@@ -787,7 +783,7 @@
 (global-set-key (kbd "C-M-^") 'enlarge-window-horizontally)
 
 ;; grep, find
-(global-set-key (kbd "C-x g") 'grep)
+(global-set-key (kbd "C-x g") 'ag)
 (global-set-key (kbd "C-x f") 'find-dired)
 
 ;; forward-list
@@ -817,6 +813,11 @@
 
 (defvar memo-file-directroy "~/.emacs.d/.memo")
 
+(defun check-commands ()
+  (unless (executable-find "ag")
+    (warn "Lack of command `ag`: Please install ag via `sudo apt-get install ag`"))
+  )
+
 (defun mystart nil
   (require 'real-auto-save)
   (add-to-list 'real-auto-save-alist "*memo*")
@@ -828,3 +829,6 @@
   )
 
 ;; (mystart)
+
+(check-commands)
+
