@@ -13,7 +13,7 @@
  '(ansi-color-names-vector
    ["black" "red3" "green3" "yellow3" "cyan" "magenta3" "cyan3" "gray90"])
  '(bm-cycle-all-buffers nil)
- '(bm-repository-file "/home/nomaddo/.bm-repository")
+ '(bm-repository-file "~/.bm-repository")
  '(browse-url-browser-function (quote browse-url-chromium))
  '(completion-category-overrides (quote ((buffer (styles basic substring)))))
  '(custom-enabled-themes (quote (manoj-dark)))
