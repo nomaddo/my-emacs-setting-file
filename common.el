@@ -46,8 +46,24 @@
   :height 120 ;; font size
   :family "Ricty Diminished")
 ;;; 日本語fontの設定
-(set-fontset-font nil 'japanese-jisx0208
-  (font-spec :family "IPAゴシック"))
+;; (set-fontset-font nil 'japanese-jisx0208
+;;   (font-spec :family "IPAゴシック"))
+
+;;; migemo
+;;; http://rubikitch.com/2014/08/20/migemo/
+(when (require 'migemo nil t)
+  (setq migemo-command "cmigemo")
+  (setq migemo-options '("-q" "--emacs"))
+  ;; Set your installed path
+  (setq migemo-dictionary "/usr/share/cmigemo/utf-8/migemo-dict")
+ 
+  (setq migemo-user-dictionary nil)
+  (setq migemo-regex-dictionary nil)
+  (setq migemo-coding-system 'utf-8-unix)
+  (migemo-init)
+  ;; migemoがなんかキーバインドを書きかえやがる
+  (define-key isearch-mode-map (kbd "C-y") 'isearch-yank-kill)
+  )
 
 ;;; guide-key
 ;;; http://www.kaichan.info/blog/2012-12-03-emacs-advent-calendar-2012-03.html
@@ -72,15 +88,23 @@
 ;; (icomplete-mode t)
 
 ;;; autopair
-(when (require 'autopair)
-  (autopair-global-mode))
+;; (when (require 'autopair)
+;;   (autopair-global-mode))
+
+;; smartparen
+(require 'smartparens-config)
+(smartparens-global-mode)
+
+;; ido-switch-buffer
+;; C-x bを強化する
+(ido-mode)
 
 ;;; iswitch-buffer buffer切り替えを強化
 ;;; C-r, C-sで候補選択ができる
 ;;; obsoleteなのでいつか標準じゃなくなると思う…
-(iswitchb-mode 1)
+;; (iswitchb-mode 1)
 ; 新しいバッファを作成するときに聞いてこない
-(setq iswitch-prompt-newbuffer nil)
+;; (setq iswitch-prompt-newbuffer nil)
 
 ;;; 履歴を次回Emacs起動時にも保存する
 (savehist-mode 1)
@@ -123,6 +147,17 @@
   (require 'wdired)
   (define-key dired-mode-map "r" 'wdired-change-to-wdired-mode))
 
+;;; dired上で表示するディレクトリやファイルの絞り込みを行うための拡張
+;;; - / /で絞り込みリセット
+;;; - / dでディレクトリのみ表示
+;;; - / .で拡張子で絞り込み
+;;; - / rで正規表現で絞り込み
+;;;
+;;; http://rubikitch.com/2015/04/07/dired-filter-2/
+(when (require 'dired-filter nil t)
+  (add-hook 'dired-mode-hook
+            '(lambda () (dired-filter-mode t))))
+
 ;;; C-wはkill-regionでリージョンをカットするコマンドだが、
 ;;; リージョンが選択されていない時には後ろの1ワードを削除するコマンドになる
 (defun kill-region-or-backward-kill-word ()
@@ -139,11 +174,12 @@
 (setq completion-ignore-case t)
 
 ;;; 行末のスペースを保存するときに削除する
-;; (add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;;; 全角スペースを黄色でハイライト
-(global-hi-lock-mode 1)
-(highlight-phrase "　")
+;;; ただしmarkdownではやられると困るのでgfm-modeではやらない
+(add-hook 'before-save-hook
+          (lambda ()
+            (if (!= major-mode `gfm-mode)
+                (delete-trailing-whitespace)
+              )))
 
 ;;; 分割した画面間をShift+矢印で移動
 (setq windmove-wrap-around t)
@@ -261,42 +297,15 @@
 (define-key view-mode-map (kbd "n") 'cua-scroll-up)
 (define-key view-mode-map (kbd "p") 'cua-scroll-down)
 
-(when (require 'viewer)
+(when (require 'viewer nil t)
   (setq viewer-modeline-color-unwritable "tomato")
   (setq viewer-modeline-color-view "orange")
   (viewer-change-modeline-color-setup))
 
-
-;; F11 フルスクリーン
-(defun fullboth-screen ()
-  (interactive)
-  (let ((fullscreen (frame-parameter (selected-frame) 'fullscreen)))
-    (cond
-     ((null fullscreen)
-      (set-frame-parameter (selected-frame) 'fullscreen 'fullboth))
-     (t
-      (set-frame-parameter (selected-frame) 'fullscreen 'nil))))
-  (redisplay))
-
-(global-set-key [f11] 'fullboth-screen)
-
-;; F12 最大化
-(defun maximized-screen ()
-  (interactive)
-  (let ((fullscreen (frame-parameter (selected-frame) 'fullscreen)))
-    (cond
-     ((null fullscreen)
-      (set-frame-parameter (selected-frame) 'fullscreen 'maximized))
-     (t
-      (set-frame-parameter (selected-frame) 'fullscreen 'nil))))
-  (redisplay))
-
-(global-set-key [f12] 'maximized-screen)
-
 ;;; pont-undoの設定
 ;;; カーソルの位置のリデュ・アンドゥをするための拡張
 ;;; 非常に便利！
-(when (require `point-undo)
+(when (require `point-undo nil t)
   (define-key dired-mode-map (kbd "[") 'point-undo)
   (define-key dired-mode-map (kbd "]") 'point-redo)
   (define-key view-mode-map (kbd "[") 'point-undo)
@@ -304,15 +313,18 @@
   (define-key global-map (kbd "M-[") 'point-undo)
   (define-key global-map (kbd "M-]") 'point-redo))
 
+;;; ibuffer
+(define-key global-map (kbd "C-x C-b") 'ibuffer)
 
 ;;; org-mode config
-                                        ; 画像のインライン表示をデフォルトにする
+;;; 画像のインライン表示をデフォルトにする
+
 (setq org-startup-with-inline-images t)
 (add-hook 'org-mode-hook 'turn-on-iimage-mode)
 (setq org-confirm-babel-evaluate nil)
 
 ;;; auto-complete.el
-(when (require 'auto-complete-config)
+(when (require 'auto-complete-config nil t)
   (add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
   (ac-config-default)
   (setq ac-candidate-limit 15)
@@ -322,13 +334,6 @@
   (setq ac-ignore-case nil)
   (setq ac-menu-height 8))
 
-;;; c-eldoc
-(when (require 'c-eldoc nil t)
-  (add-hook 'c-mode-hook
-            (lambda ()
-              (set (make-local-variable 'eldoc-idle-delay) 0.20)
-              (c-turn-on-eldoc-mode))))
-
 ;;; 括弧の範囲色
 ;;; #500 は暗い赤、背景が黒いと映える
 ;;; テーマによっては見づらいことがあるので、
@@ -336,6 +341,7 @@
 (set-face-background 'show-paren-match-face "#500")
 
 ;;; redo+
+;;; redoは標準にはないので拡張で入れる
 (when (require 'redo+ nil t)
   (define-key global-map (kbd "C-?") 'redo))
 
@@ -351,62 +357,32 @@
 (define-key occur-mode-map (kbd "j") 'occur-next)
 (define-key occur-mode-map (kbd "k") 'occur-prev)
 
-(when (executable-find "ocp-indent")
-  (ocp-setup-indent))
-
 ;; Start merlin on ocaml files
 (when (require 'merlin nil t)
   (add-hook 'tuareg-mode-hook 'merlin-mode t)
   (add-hook 'caml-mode-hook 'merlin-mode t)
+
   ;; Enable auto-complete
   (setq merlin-use-auto-complete-mode 'easy)
+
   ;; Use opam switch to lookup ocamlmerlin binary
   (setq merlin-command 'opam)
   (add-hook
    'tuareg-mode-hook
    '(lambda ()
-      (define-key tuareg-mode-map "\C-c\C-p" 'merlin-pop-stack)
-      (local-set-key "\C-ch" 'merlin-pop-stack))))
-
-;;; ocamlspot
-;;; ocamlspotは現状自動的にロードできる仕組みになっていません
-;;; 手動で入れてください。merlinがあれば何とかなりますが。
-(require 'caml)
-(when (require 'ocamlspot nil t)
-  ;; tuareg mode hook (use caml-mode-hook instead if you use caml-mode)
-  (add-hook
-   'tuareg-mode-hook
-   '(lambda ()
       (ocp-setup-indent)
-      ;; turn on auto-fill minor mode
-      ;; (auto-fill-mode 1)
-
-      ;; ocamlspot
-      (local-set-key "\C-c;" 'ocamlspot-query)
-      (local-set-key "\C-c:" 'ocamlspot-query-interface)
-      (local-set-key "\C-c'" 'ocamlspot-query-uses)
-      (local-set-key "\C-ct" 'ocamlspot-type)
-      (local-set-key "\C-c\C-i" 'ocamlspot-xtype)
-      (local-set-key "\C-c\C-y" 'ocamlspot-type-and-copy)
-      (local-set-key "\C-cp" 'ocamlspot-pop-jump-stack)
+      (define-key tuareg-mode-map "\C-c\C-p" 'merlin-pop-stack)
+      (local-set-key "\C-ch" 'merlin-pop-stack)
       (defun utop-eval-region-or-phrase ()
         (interactive)
         (if (region-active-p)
             (utop-eval-region (mark) (point))
           (utop-eval-phrase)))
-      (define-key tuareg-mode-map "\C-x\C-e" 'utop-eval-region-or-phrase)
-      (define-key tuareg-mode-map (kbd "C-M-n") 'forward-list)
-      (define-key tuareg-mode-map (kbd "C-M-p") 'backward-list)
-      )
-   )
-
-  ;; set the path of the ocamlspot binary.
-  ;; If you did make opt, ocamlspot.opt is recommended.
-  ;; (setq ocamlspot-command "~/Dropbox/prog/ocamlspot.opt")
-  )
+      (define-key tuareg-mode-map "\C-x\C-e" 'utop-eval-region-or-phrase))
+   ))
 
 ;;; ocamldebug
-;;; 標準よりもキーバインドを使いやすくします(でないと死ぬ)
+;;; 標準よりもキーバインドを使いやすくします
 (when (require 'ocamldebug nil t)
   (def-ocamldebug "backstep" "\C-b" "Back step one source line with display.")
   (def-ocamldebug "previous" "\C-p" "")
@@ -439,62 +415,6 @@
 (add-hook 'plain-tex-mode-hook 'latex-mode-setup)
 
 (setq TeX-default-mode 'japanese-latex-mode)
-
-;;; latexmkを使ってコンパイル
-;;; http://konn-san.com/prog/why-not-latexmk.html
-;; (when (require 'auctex-latexmk nil t)
-;;  (auctex-latexmk-setup))
-
-(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-(setq reftex-plug-into-AUCTeX t)
-
-(setq TeX-auto-save t)
-(setq TeX-parse-self t)
-(setq-default TeX-master nil)
-
-(add-hook 'LaTeX-mode-hook 'visual-line-mode)
-(add-hook 'LaTeX-mode-hook 'flyspell-mode)
-(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
-
-(setq japanese-LaTeX-default-style "jarticle")
-(setq TeX-output-view-style '(("^dvi$" "." "xdvi '%d'")))
-(setq preview-image-type 'dvipng)
-(add-hook 'LaTeX-mode-hook (function (lambda ()
-  (add-to-list 'TeX-command-list
-               '("direct" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t && dvipdfmx -V 4 '%s'"
-                 TeX-run-command t nil))
-  (add-to-list 'TeX-command-list
-               '("pTeX" "%(PDF)ptex %`%S%(PDFout)%(mode)%' %t"
-                 TeX-run-TeX nil (plain-tex-mode) :help "Run ASCII pTeX"))
-  (add-to-list 'TeX-command-list
-               '("pLaTeX" "%(PDF)platex %`%S%(PDFout)%(mode)%' %t"
-                 TeX-run-TeX nil (latex-mode) :help "Run ASCII pLaTeX"))
-  (add-to-list 'TeX-command-list
-               '("evince" "evince '%s.pdf' " TeX-run-command t nil))
-  (add-to-list 'TeX-command-list
-               '("pdf" "dvipdfmx -V 4 '%s' " TeX-run-command t nil))
-  )))
-
-;; Change key bindings
-(add-hook 'reftex-mode-hook
-          '(lambda ()
-             (define-key reftex-mode-map (kbd "\C-cr") 'reftex-reference)
-             (define-key reftex-mode-map (kbd "\C-cl") 'reftex-label)
-             (define-key reftex-mode-map (kbd "\C-cc") 'reftex-citation)))
-
-;; 数式のラベル作成時にも自分でラベルを入力できるようにする
-(setq reftex-insert-label-flags '("s" "sfte"))
-
-;; \eqrefを使う
-(setq reftex-label-alist
-      '((nil ?e nil "\\eqref{%s}" nil nil)))
-
-;; RefTeXで使用するbibファイルの位置を指定する
-(setq reftex-default-bibliography '("~/tex/biblio.bib" "~/tex/biblio2.bib"))
-
-(define-key ac-completing-map (kbd "<tab>") 'ac-complete)
-(setq ac-auto-start 4)
-(setq ac-auto-show-menu 0.5)
 
 ;;; lookコマンドを英単語の情報源にした英単語の補完を自作する
 ;;; M-hにバインドしてます
@@ -566,40 +486,41 @@
 ;;; http://qiita.com/okonomi/items/f18c9221420eca47ebc6
 ;;; デフォルトの翻訳はC-x tで英語から日本語への翻訳
 ;;; この言語縛りを外すには、コマンドの前にC-uを押す
-(require 'google-translate)
-(global-set-key (kbd "C-x t") 'google-translate-at-point)
-(global-set-key (kbd "C-x T") 'google-translate-query-translate)
-;; 翻訳のデフォルト値を設定（en -> ja）
-(custom-set-variables
- '(google-translate-default-source-language "en")
- '(google-translate-default-target-language "ja"))
+(when (require 'google-translate nil t)
+  (global-set-key (kbd "C-x t") 'google-translate-at-point)
+  (global-set-key (kbd "C-x T") 'google-translate-query-translate)
+  ;; 翻訳のデフォルト値を設定（en -> ja）
+  (custom-set-variables
+   '(google-translate-default-source-language "en")
+   '(google-translate-default-target-language "ja")))
 
 ;;; ace-jump-mode
 ;;; http://d.hatena.ne.jp/syohex/20120304/1330822993
 ;;; C-c SPCで素早くカーソルを移動する(上のリンク参照)
 ;;; C-x SPCで戻ってくる
-(autoload
-  'ace-jump-mode
-  "ace-jump-mode"
-  "Emacs quick move minor mode"
-  t)
-(define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
-(autoload
-  'ace-jump-mode-pop-mark
-  "ace-jump-mode"
-  "Ace jump back:-)"
-  t)
-(eval-after-load "ace-jump-mode"
-  '(ace-jump-mode-enable-mark-sync))
-(define-key global-map (kbd "C-x SPC") 'ace-jump-mode-pop-mark)
-(define-key global-map (kbd "C-c l") 'ace-jump-line-mode)
-(define-key global-map (kbd "C-c w") 'ace-jump-word-mode)
-(require 'shell)
-(define-key shell-mode-map (kbd "C-c SPC") 'ace-jump-mode)
+(when (require 'ace-jump nil t)
+  (autoload
+    'ace-jump-mode
+    "ace-jump-mode"
+    "Emacs quick move minor mode"
+    t)
+  (define-key global-map (kbd "C-c SPC") 'ace-jump-mode)
+  (autoload
+    'ace-jump-mode-pop-mark
+    "ace-jump-mode"
+    "Ace jump back:-)"
+    t)
+  (eval-after-load "ace-jump-mode"
+    '(ace-jump-mode-enable-mark-sync))
+  (define-key global-map (kbd "C-x SPC") 'ace-jump-mode-pop-mark)
+  (define-key global-map (kbd "C-c l") 'ace-jump-line-mode)
+  (define-key global-map (kbd "C-c w") 'ace-jump-word-mode)
+  (require 'shell)
+  (define-key shell-mode-map (kbd "C-c SPC") 'ace-jump-mode))
 
 ;;; git-gutter
 ;;; http://qiita.com/syohex/items/a669b35fbbfcdda0cbf2
-(when (require 'git-gutter)
+(when (require 'git-gutter nil t)
   (global-git-gutter-mode t)
   (global-set-key (kbd "M-n") 'git-gutter:next-hunk)
   (global-set-key (kbd "M-p") 'git-gutter:previous-hunk)
@@ -615,11 +536,11 @@
   (define-key my-git-map (kbd "r") 'git-gutter:revert-hunk)
 )
 
-(when (require 'magit)
-  (setq magit-last-seen-setup-instructions "1.4.0")
-  (define-key my-original-map (kbd "M-o") 'magit-key-mode-popup-dispatch)
+(when (require 'magit nil t)
+  (define-key my-original-map (kbd "M-o") 'magit-dispatch-popup)
+  (define-key magit-popup-mode-map (kbd "s") `magit-status)
   (setq magit-auto-revert-mode nil)
-)
+  )
 
 ;;; org-mode
 (require 'org)
@@ -656,10 +577,8 @@
 
 ;;; image+.el
 ;;; emacs上で表示する画像の大きさなどを調整するための拡張
-(require 'image+)
-(imagex-auto-adjust-mode 1)
-
-(add-to-list 'popwin:special-display-config '("*Find*"))
+(when (require 'image+ nil t)
+  (imagex-auto-adjust-mode 1))
 
 ;;; anzu
 ;;; http://qiita.com/syohex/items/56cf3b7f7d9943f7a7ba
@@ -710,24 +629,10 @@
   (setq jedi:complete-on-dot t)                 ; optional
 )
 
-;;; javascript
-;;; tern-complete
-;; (add-to-list 'load-path "~/tern")
-;; (eval-after-load 'tern
-;;    '(progn
-;;        (require 'tern-auto-complete)
-;;        (tern-ac-setup)))
-;;   (add-hook 'js-mode-hook (lambda () (js2-mode) (tern-mode t)))
-;; (define-key tern-mode-keymap (kbd "M-i") 'tern-ac-complete)
-
-;;; for html
-;;; zencoding
-;;; http://www.456bereastreet.com/archive/200909/write_html_and_css_quicker_with_with_zen_coding/
-
-(when (require 'zencoding-mode nil t)
-  (add-to-list 'load-path "~/Emacs/zencoding/")
-  (add-hook 'sgml-mode-hook 'zencoding-mode) ;; Auto-start on any markup modes
-)
+;;; sml-mode
+(when (require 'sml-mode nil t)
+  (define-key sml-mode-map (kbd "C-c C-c") `compile)
+  )
 
 ;;; makefile-mode
 (add-hook 'makefile-mode-hook
@@ -735,6 +640,19 @@
      (local-set-key (kbd "C-c C-c") `compile)
      ))
 
+;; ghc-mod
+(add-to-list 'exec-path (concat (getenv "HOME") "/.cabal/bin"))
+(add-to-list 'load-path "~/.cabal/share/x86_64-linux-ghc-7.6.3/ghc-mod-5.4.0.0/elisp/")
+(autoload 'ghc-init "ghc")
+
+(defun my-ac-haskell-mode ()
+  (add-to-list ac-sources '(ac-source-ghc-mod)))
+
+(add-hook 'haskell-mode-hook
+          '(lambda ()
+             (ghc-init)
+             (my-ac-haskell-mode)))
+;; (define-key haskell-mode-map (kbd "M-i") 'ghc-complete)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymapの設定やキーバインドの変更部分
@@ -752,8 +670,10 @@
 
 (define-key global-map [(C x)(h)] 'recentf-open-files)
 (define-key global-map [(C x)(C z)] `just-one-space)
-(when (require 'popwin)
-  (define-key global-map [(C z)] popwin:keymap))
+
+(when (require 'popwin nil t)
+  (define-key global-map [(C z)] popwin:keymap)
+  (add-to-list 'popwin:special-display-config '("*Find*")))
 
 (define-key compilation-mode-map (kbd "j") 'compilation-next-error)
 (define-key compilation-mode-map (kbd "k") 'compilation-previous-error)
@@ -770,9 +690,6 @@
 (global-set-key "\C-h" 'delete-backward-char)
 (global-set-key [(C -)] 'help-command)
 
-;;; M-x めんどくさい
-(global-set-key (kbd "C-;") 'execute-extended-command)
-
 ;;; view-mode
 (global-set-key (kbd "C-c C-v") 'view-mode)
 
@@ -783,7 +700,7 @@
 (global-set-key (kbd "C-M-^") 'enlarge-window-horizontally)
 
 ;; grep, find
-(global-set-key (kbd "C-x g") 'ag)
+(global-set-key (kbd "C-x g") 'grep)
 (global-set-key (kbd "C-x f") 'find-dired)
 
 ;; forward-list
@@ -800,35 +717,5 @@
 ;; magit-log
 (define-key my-original-map (kbd "s") 'magit-log)
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; start phase
-;; 起動時に実行するコマンドを書く
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; maximize the buffer initially
-;;;
-;; (custom-set-variables
-;;  '(initial-frame-alist (quote ((fullscreen . maximized)))))
-
-(defvar memo-file-directroy "~/.emacs.d/.memo")
-
-(defun check-commands ()
-  (unless (executable-find "ag")
-    (warn "Lack of command `ag`: Please install ag via `sudo apt-get install ag`"))
-  )
-
-(defun mystart nil
-  (require 'real-auto-save)
-  (add-to-list 'real-auto-save-alist "*memo*")
-  (find-file memo-file-directroy)
-  (rename-buffer "*memo*")
-  (org-mode)
-  (real-auto-save-mode)
-  (switch-to-buffer "*scratch*")
-  )
-
-;; (mystart)
-
-(check-commands)
-
+;; compile
+(define-key global-map (kbd "C-c C-c") 'compile)
