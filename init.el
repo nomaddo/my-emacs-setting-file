@@ -56,7 +56,6 @@
  '(indent-tabs-mode nil)
  '(js2-basic-offset 2)
  '(magit-push-always-verify t)
- '(ocamlspot-command "~/Dropbox/prog/ocamlspot.opt")
  '(org-agenda-export-html-style nil)
  '(org-agenda-files nil)
  '(org-babel-load-languages (quote ((emacs-lisp . t) (dot . t) (ocaml . t))))
