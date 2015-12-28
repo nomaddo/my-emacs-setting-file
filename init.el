@@ -23,7 +23,7 @@
  '(blink-matching-delay 0.1)
  '(bm-cycle-all-buffers nil)
  '(bm-repository-file "~/.bm-repository")
- '(browse-url-browser-function (quote browse-url-firefox))
+ '(browse-url-browser-function (quote browse-url-chromium))
  '(completion-category-overrides (quote ((buffer (styles basic substring)))))
  '(cua-normal-cursor-color "black")
  '(custom-enabled-themes (quote (wombat)))
