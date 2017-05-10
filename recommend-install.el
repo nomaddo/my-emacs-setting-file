@@ -8,9 +8,9 @@
 
 (setq initial-recommend-packages
       '(tuareg magit git-gutter markdown-mode auto-complete
-	       expand-region bm google-translate popup popwin redo+ viewer
+	       expand-region bm popup popwin redo+ viewer
 	       ace-jump-mode anzu wgrep point-undo
-	       org-present image+ ac-math auctex auctex-latexmk fm ag
-           recentf-ext guide-key w3m smartparen minibuf-isearch search-web))
+	       image+ auctex auctex-latexmk fm 
+	       recentf-ext guide-key w3m smartparens minibuf-isearch))
 
 (mapc 'package-install initial-recommend-packages)

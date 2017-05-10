@@ -92,7 +92,7 @@
 ;;   (autopair-global-mode))
 
 ;; smartparen
-(require 'smartparens-config)
+(require 'smartparens)
 (smartparens-global-mode)
 
 ;; ido-switch-buffer
